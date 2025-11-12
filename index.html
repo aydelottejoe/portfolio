@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alex J. - Developer & Designer</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configure Tailwind for the "Inter" font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc; /* light gray background */
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white shadow-md sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <a href="#home" class="text-2xl font-extrabold text-indigo-600 tracking-tight">Alex J.</a>
+            <nav class="space-x-4">
+                <a href="#about" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150">About</a>
+                <a href="#skills" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150">Skills</a>
+                <a href="#contact" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150">Contact</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 space-y-16 pb-20">
+
+        <!-- Hero Section -->
+        <section id="home" class="text-center py-20 bg-white rounded-xl shadow-lg border border-indigo-100">
+            <img class="w-28 h-28 rounded-full mx-auto mb-6 object-cover border-4 border-indigo-400"
+                 src="https://placehold.co/150x150/4f46e5/ffffff?text=AJ"
+                 alt="Profile Picture">
+            <h1 class="text-5xl font-extrabold tracking-tight mb-4 text-gray-900">
+                Hi, I'm <span class="text-indigo-600">Alex Johnson</span>
+            </h1>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                I build clean, responsive web applications and enjoy bringing ideas to life through code.
+            </p>
+            <div class="mt-8">
+                <a href="#contact" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-md text-white bg-indigo-600 hover:bg-indigo-700 transition duration-300 transform hover:scale-105">
+                    Get in Touch
+                </a>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="bg-white p-8 sm:p-12 rounded-xl shadow-lg">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6 border-b-2 border-indigo-200 pb-2">About Me</h2>
+            <div class="space-y-4 text-lg text-gray-600">
+                <p>
+                    I am a passionate full-stack developer with 5 years of experience specializing in JavaScript ecosystems like React and Node.js. My focus is always on creating efficient, scalable, and delightful user experiences. I thrive on solving complex problems and collaborating with cross-functional teams.
+                </p>
+                <p>
+                    Beyond coding, I enjoy digital illustration and exploring new hiking trails. This balance keeps my creativity flowing and my perspective fresh, which often translates into better design and development solutions.
+                </p>
+            </div>
+        </section>
+
+        <!-- Skills Section -->
+        <section id="skills" class="bg-white p-8 sm:p-12 rounded-xl shadow-lg">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8 border-b-2 border-indigo-200 pb-2">Technical Skills</h2>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Skill Card 1 -->
+                <div class="bg-indigo-50 p-4 rounded-lg text-center shadow-sm hover:shadow-md transition duration-200 transform hover:-translate-y-1">
+                    <p class="text-xl font-semibold text-indigo-700">React</p>
+                    <p class="text-sm text-indigo-500">Frontend Framework</p>
+                </div>
+                <!-- Skill Card 2 -->
+                <div class="bg-indigo-50 p-4 rounded-lg text-center shadow-sm hover:shadow-md transition duration-200 transform hover:-translate-y-1">
+                    <p class="text-xl font-semibold text-indigo-700">Node.js</p>
+                    <p class="text-sm text-indigo-500">Backend Runtime</p>
+                </div>
+                <!-- Skill Card 3 -->
+                <div class="bg-indigo-50 p-4 rounded-lg text-center shadow-sm hover:shadow-md transition duration-200 transform hover:-translate-y-1">
+                    <p class="text-xl font-semibold text-indigo-700">Tailwind CSS</p>
+                    <p class="text-sm text-indigo-500">Utility-First Styling</p>
+                </div>
+                <!-- Skill Card 4 -->
+                <div class="bg-indigo-50 p-4 rounded-lg text-center shadow-sm hover:shadow-md transition duration-200 transform hover:-translate-y-1">
+                    <p class="text-xl font-semibold text-indigo-700">Figma</p>
+                    <p class="text-sm text-indigo-500">UI/UX Design</p>
+                </div>
+                 <!-- Skill Card 5 -->
+                <div class="bg-indigo-50 p-4 rounded-lg text-center shadow-sm hover:shadow-md transition duration-200 transform hover:-translate-y-1">
+                    <p class="text-xl font-semibold text-indigo-700">PostgreSQL</p>
+                    <p class="text-sm text-indigo-500">Database</p>
+                </div>
+                 <!-- Skill Card 6 -->
+                <div class="bg-indigo-50 p-4 rounded-lg text-center shadow-sm hover:shadow-md transition duration-200 transform hover:-translate-y-1">
+                    <p class="text-xl font-semibold text-indigo-700">TypeScript</p>
+                    <p class="text-sm text-indigo-500">Language</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="bg-white p-8 sm:p-12 rounded-xl shadow-lg">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6 border-b-2 border-indigo-200 pb-2">Get In Touch</h2>
+            <p class="text-lg text-gray-600 mb-8 max-w-xl">
+                Whether you have a question, a project idea, or just want to say hi, I'd love to hear from you.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Contact Info -->
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-7 13a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2h-4a2 2 0 01-2-2z"></path></svg>
+                        <span class="text-gray-700">alex.johnson@example.com</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        <a href="#" target="_blank" class="text-indigo-600 hover:underline">LinkedIn Profile</a>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                        <a href="#" target="_blank" class="text-indigo-600 hover:underline">GitHub Repos</a>
+                    </div>
+                </div>
+
+                <!-- Simple Form Mockup (Since we can't send actual emails here) -->
+                <div>
+                    <form action="#" method="POST" class="space-y-4">
+                        <input type="text" placeholder="Your Name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150" required>
+                        <input type="email" placeholder="Your Email" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150" required>
+                        <textarea placeholder="Your Message" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150" required></textarea>
+                        <button type="submit" class="w-full px-4 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-200 transform hover:scale-100">
+                            Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm">
+            &copy; <span id="year">2024</span> Alex Johnson. All rights reserved. | Built with HTML & Tailwind CSS.
+        </div>
+    </footer>
+
+    <!-- Simple JS to dynamically update the year in the footer -->
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>
