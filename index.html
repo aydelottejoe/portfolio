@@ -21,10 +21,34 @@
     <header class="bg-white shadow-md sticky top-0 z-10">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <a href="#home" class="text-2xl font-extrabold text-indigo-600 tracking-tight">Joseph A.</a>
-            <nav class="space-x-4">
+            
+            <!-- Navigation and New Dropdown -->
+            <!-- Note: Switched to 'flex items-center' for proper vertical alignment with the dropdown -->
+            <nav class="flex items-center space-x-4">
+                <!-- Internal Anchor Links -->
                 <a href="#about" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150">About</a>
                 <a href="#skills" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150">Skills</a>
                 <a href="#contact" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150">Contact</a>
+                
+                <!-- Dropdown Container -->
+                <div class="relative" id="dropdown-menu">
+                    <!-- Dropdown Button (Trigger) -->
+                    <button id="dropdown-button" class="flex items-center space-x-1 text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150 p-2 rounded-lg hover:bg-indigo-50">
+                        <span>More</span>
+                        <!-- Down Arrow Icon -->
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+
+                    <!-- Dropdown Content (Hidden by default) -->
+                    <div id="dropdown-content" class="absolute right-0 mt-2 w-40 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 z-20 hidden">
+                        <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="dropdown-button">
+                            <!-- Dropdown Links (Replace .html with your actual pages) -->
+                            <a href="projects.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">Projects</a>
+                            <a href="blog.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">Blog</a>
+                            <a href="resume.pdf" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">Resume (PDF)</a>
+                        </div>
+                    </div>
+                </div>
             </nav>
         </div>
     </header>
@@ -123,9 +147,29 @@
         </div>
     </footer>
 
-    <!-- Simple JS to dynamically update the year in the footer -->
+    <!-- Simple JS to handle the dropdown toggle and dynamically update the year in the footer -->
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
+
+        const dropdownButton = document.getElementById('dropdown-button');
+        const dropdownContent = document.getElementById('dropdown-content');
+
+        // Toggle the dropdown when the button is clicked
+        dropdownButton.addEventListener('click', () => {
+            dropdownContent.classList.toggle('hidden');
+        });
+
+        // Close the dropdown if the user clicks anywhere outside of it
+        document.addEventListener('click', (event) => {
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            // Check if the click event target is NOT inside the dropdown menu container
+            if (dropdownMenu && !dropdownMenu.contains(event.target)) {
+                // If it's not hidden, hide it.
+                if (!dropdownContent.classList.contains('hidden')) {
+                    dropdownContent.classList.add('hidden');
+                }
+            }
+        });
     </script>
 </body>
 </html>
