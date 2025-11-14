@@ -448,11 +448,11 @@
             optionChart.options.plugins.title.text = `${positionType} ${contractType} Payoff at Expiration vs. Stock Price`;
             
             // Dataset 0: Net Payoff Curve (The primary visualization)
-            optionChart.data.datasets[0].label = `Net Payoff (P&L) @ Premium $${payoff_premium.toFixed(2)}`;
+            optionChart.data.datasets[0].label = `Payout     `;
             optionChart.data.datasets[0].data = netPayoffData;
             
             // Dataset 1: BSM Price Curve (The theoretical price value)
-            optionChart.data.datasets[1].label = `BSM Price (Theoretical Value)`;
+            optionChart.data.datasets[1].label = `BSM Value`;
             optionChart.data.datasets[1].data = bsmPriceData;
             
             // Find max/min for dynamic Y-axis scaling (critical for P&L chart)
