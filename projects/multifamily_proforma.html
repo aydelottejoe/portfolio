@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multifamily Investment Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js Core -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <!-- Chart.js Annotation Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* Define the Inter font and global styles */
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom number input styling */
+        .input-group input[type="number"], .input-group select {
+            border: 1px solid #d1d5db;
+            padding: 8px;
+            border-radius: 8px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-group input[type="number"]:focus, .input-group select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            outline: none;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f0f0f0; }
+        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3730a3; }
+        
+        /* Ensures chart area expands vertically within its container */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 50%; /* Aspect ratio 4:3 */
+        }
+        .chart-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        'primary-blue': '#4f46e5',
+                        'secondary-gray': '#f3f4f6',
+                        'cashflow-green': '#10b981', 
+                        'paydown-blue': '#3b82f6',
+                        'appreciation-purple': '#8b5cf6',
+                        'equity-yellow': '#facc15',
+                        'payoff-red': '#ef4444',
+                        'tax-pink': '#ec4899',
+                        'irr-orange': '#f97316', /* Tailwind orange-600 */
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-secondary-gray min-h-screen">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-6 md:mb-8">
+            <h1 class="text-3xl font-extrabold text-primary-blue sm:text-4xl">Multifamily Investment Pro Forma</h1>
+            <p class="mt-2 text-md text-gray-600">Analyze wealth accumulation and Internal Rate of Return (IRR) until exit.</p>
+        </header>
+
+        <main class="space-y-6 lg:space-y-8">
+            
+            <!-- CONTROLS PANEL (Now full width at the top) -->
+            <div id="controls" class="p-4 sm:p-6 bg-white shadow-xl rounded-xl border border-gray-100">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Assumptions & Inputs</h2>
+
+                <!-- Input Groups arranged in a responsive grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 space-y-0">
+                    
+                    <!-- PROPERTY & PURCHASE -->
+                    <div class="space-y-4 p-4 border rounded-lg bg-blue-50">
+                        <h3 class="font-bold text-lg text-primary-blue">Property Details</h3>
+                        
+                        <div class="input-group">
+                            <label for="purchasePrice" class="block text-sm font-medium text-gray-700">Purchase Price ($):</label>
+                            <input type="number" id="purchasePrice" value="850000" min="100000" step="10000" class="w-full mt-1">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="units" class="block text-sm font-medium text-gray-700">Number of Units (1-12):</label>
+                            <input type="number" id="units" value="4" min="1" max="12" step="1" class="w-full mt-1">
+                        </div>
+                    </div>
+
+                    <!-- LOAN DETAILS -->
+                    <div class="space-y-4 p-4 border rounded-lg bg-green-50">
+                        <h3 class="font-bold text-lg text-cashflow-green">Financing Details</h3>
+                        
+                        <div class="input-group">
+                            <label for="downPayment" class="block text-sm font-medium text-gray-700">Down Payment (%):</label>
+                            <input type="number" id="downPayment" value="25" min="5" max="50" step="1" class="w-full mt-1">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="loanTerm" class="block text-sm font-medium text-gray-700">Loan Term (Years):</label>
+                            <input type="number" id="loanTerm" value="30" min="10" max="40" step="1" class="w-full mt-1">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="interestRate" class="block text-sm font-medium text-gray-700">Interest Rate (%):</label>
+                            <input type="number" id="interestRate" value="7.00" min="2.00" max="10.00" step="0.01" class="w-full mt-1">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="pmi" class="block text-sm font-medium text-gray-700">Monthly PMI ($) (Only if DP &lt; 20%):</label>
+                            <input type="number" id="pmi" value="0" min="0" max="500" step="10" class="w-full mt-1">
+                            <p class="text-xs text-gray-500 mt-1">PMI is automatically ignored if Down Payment is $\ge 20\%$.</p>
+                        </div>
+                    </div>
+
+                    <!-- REVENUE & GROWTH -->
+                    <div class="space-y-4 p-4 border rounded-lg bg-yellow-50">
+                        <h3 class="font-bold text-lg text-equity-yellow">Revenue & Appreciation</h3>
+                        
+                        <div class="input-group">
+                            <label for="rentPerUnit" class="block text-sm font-medium text-gray-700">Initial Rent per Unit ($):</label>
+                            <input type="number" id="rentPerUnit" value="1500" min="500" step="50" class="w-full mt-1">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="rentGrowth" class="block text-sm font-medium text-gray-700">Annual Rent Growth (%):</label>
+                            <input type="number" id="rentGrowth" value="3.0" min="0.0" max="10.0" step="0.1" class="w-full mt-1">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="occupancy" class="block text-sm font-medium text-gray-700">Occupancy Rate (%):</label>
+                            <input type="number" id="occupancy" value="97" min="50" max="100" step="1" class="w-full mt-1">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="appreciation" class="block text-sm font-medium text-gray-700">Annual Appreciation (%):</label>
+                            <input type="number" id="appreciation" value="5.0" min="0.0" max="10.0" step="0.1" class="w-full mt-1">
+                        </div>
+                    </div>
+
+                    <!-- EXPENSES -->
+                    <div class="space-y-4 p-4 border rounded-lg bg-red-50">
+                        <h3 class="font-bold text-lg text-payoff-red">Annual Expenses</h3>
+                        
+                        <div class="input-group">
+                            <label for="propertyTax" class="block text-sm font-medium text-gray-700">Property Tax ($):</label>
+                            <input type="number" id="propertyTax" value="8500" min="0" step="100" class="w-full mt-1">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="insurance" class="block text-sm font-medium text-gray-700">Insurance ($):</label>
+                            <input type="number" id="insurance" value="3000" min="0" step="100" class="w-full mt-1">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="utilities" class="block text-sm font-medium text-gray-700">Utilities & Maint. ($):</label>
+                            <input type="number" id="utilities" value="6000" min="0" step="100" class="w-full mt-1">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="expenseGrowth" class="block text-sm font-medium text-gray-700">Annual Expense Growth (%):</label>
+                            <input type="number" id="expenseGrowth" value="2.5" min="0.0" max="10.0" step="0.1" class="w-full mt-1">
+                        </div>
+                    </div>
+
+                    <!-- TAX ADVANTAGES -->
+                    <div class="space-y-4 p-4 border rounded-lg bg-pink-50">
+                        <h3 class="font-bold text-lg text-tax-pink">Tax Advantages</h3>
+                        
+                        <div class="input-group">
+                            <label for="marginalTaxRate" class="block text-sm font-medium text-gray-700">Marginal Tax Rate (%):</label>
+                            <input type="number" id="marginalTaxRate" value="30" min="0" max="50" step="1" class="w-full mt-1">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="nonCashDeduction" class="block text-sm font-medium text-gray-700">Annual Non-Cash Deduction (e.g., Depreciation) ($):</label>
+                            <input type="number" id="nonCashDeduction" value="15000" min="0" step="1000" class="w-full mt-1">
+                            <p class="text-xs text-gray-500 mt-1">Annual deduction amount (until life expires).</p>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="taxDeductionLife" class="block text-sm font-medium text-gray-700">Non-Cash Deduction Life (Years):</label>
+                            <input type="number" id="taxDeductionLife" value="27" min="0" max="40" step="1" class="w-full mt-1">
+                            <p class="text-xs text-gray-500 mt-1">Period over which the deduction applies (e.g., 27.5 for residential).</p>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="canDeductActiveIncome" class="block text-sm font-medium text-gray-700">Deduct Passive Loss Against Active Income?</label>
+                            <select id="canDeductActiveIncome" class="w-full mt-1 border border-gray-300 p-2 rounded-lg">
+                                <option value="true" selected>Yes (e.g., Real Estate Professional)</option>
+                                <option value="false">No (Loss is suspended)</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Determines if a tax loss provides an immediate cash benefit (tax shield).</p>
+                        </div>
+                    </div>
+                    
+                    <!-- EXIT ASSUMPTIONS -->
+                    <div class="space-y-4 p-4 border rounded-lg bg-purple-50">
+                        <h3 class="font-bold text-lg text-appreciation-purple">Exit Assumptions</h3>
+                        
+                        <div class="input-group">
+                            <label for="holdingPeriod" class="block text-sm font-medium text-gray-700">Holding Period (Years):</label>
+                            <input type="number" id="holdingPeriod" value="10" min="5" max="40" step="1" class="w-full mt-1">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="costOfSale" class="block text-sm font-medium text-gray-700">Cost of Sale (% of Value):</label>
+                            <input type="number" id="costOfSale" value="6.0" min="0.0" max="15.0" step="0.5" class="w-full mt-1">
+                            <p class="text-xs text-gray-500 mt-1">Broker fees, closing costs, etc. applied at sale.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHART PANEL & SUMMARY (Now full width at the bottom) -->
+            <div class="p-4 sm:p-6 bg-white shadow-xl rounded-xl border border-gray-100 flex flex-col">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Equity Growth & Rate of Return (Calculated over <span id="summaryTerm">10</span> Years)</h2>
+                
+                <div class="chart-container flex-grow">
+                    <canvas id="investmentChart"></canvas>
+                </div>
+                
+                <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-bold text-gray-800 mb-2 border-b pb-1">Investment Projections at Exit:</h3>
+                    <div id="summaryDisplay" class="grid grid-cols-2 gap-2 text-sm">
+                        <!-- Summary data injected here -->
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Total Profit is Net Cash Out + Cumulative Cash Flow + Cumulative Tax Advantage - Initial Investment.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // Global storage for simulation results
+        let simulationResults = []; 
+        let cumulativeIrr = [];
+        const MAX_SIMULATION_YEARS = 40; 
+        
+        // GLOBAL CHART VARIABLE 
+        let investmentChart; 
+
+        // --- Core Financial Model Functions ---
+
+        /**
+         * Formats a number as a currency string.
+         */
+        const currencyFormatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        });
+        
+        // Define Chart Colors
+        const TAX_ADVANTAGE_COLOR = 'rgba(236, 72, 153, 0.7)'; // tax-pink
+        const IRR_COLOR = 'rgba(249, 115, 22, 0.8)'; // irr-orange
+
+        /**
+         * Calculates the fixed monthly payment for a fully amortizing loan.
+         */
+        function calculateMonthlyPayment(principal, annualRate, termsInYears) {
+            const monthlyRate = annualRate / 12;
+            const months = termsInYears * 12;
+
+            if (monthlyRate === 0) return principal / months;
+            if (months === 0) return 0;
+
+            const factor = Math.pow(1 + monthlyRate, months);
+            return principal * (monthlyRate * factor) / (factor - 1);
+        }
+
+        /**
+         * Calculates the remaining mortgage balance after 'k' payments.
+         */
+        function calculateRemainingBalance(principal, annualRate, termsInYears, monthsPaid) {
+            const monthlyRate = annualRate / 12;
+            const months = termsInYears * 12;
+
+            if (monthsPaid >= months) return 0;
+            if (monthlyRate === 0) return principal * (1 - monthsPaid / months);
+            if (months === 0) return principal;
+
+            const factorN = Math.pow(1 + monthlyRate, months);
+            const factorK = Math.pow(1 + monthlyRate, monthsPaid);
+            
+            const balance = principal * (factorN - factorK) / (factorN - 1);
+            // Ensure balance is exactly 0 if fully paid
+            return (balance < 1 && monthsPaid >= months) ? 0 : Math.max(0, balance); 
+        }
+
+        /**
+         * Calculates the Internal Rate of Return (IRR) using Newton's method.
+         */
+        function calculateIRR(cashFlows) {
+            if (cashFlows.length < 2) return 0;
+            if (cashFlows.every(cf => cf === 0)) return 0;
+
+            // Helper function for Net Present Value (NPV)
+            const NPV = (rate) => {
+                return cashFlows.reduce((sum, flow, year) => {
+                    return sum + flow / Math.pow(1 + rate, year);
+                }, 0);
+            };
+
+            let guess = 0.1; 
+            const maxIterations = 100;
+            const tolerance = 0.0001;
+
+            for (let i = 0; i < maxIterations; i++) {
+                const npv = NPV(guess);
+
+                // Derivative of NPV (NPV')
+                const derivative = cashFlows.reduce((sum, flow, year) => {
+                    return sum - flow * year / Math.pow(1 + guess, year + 1);
+                }, 0);
+
+                if (Math.abs(derivative) < 1e-6) {
+                    // Try nudging the guess if derivative is zero
+                    guess += 0.001; 
+                    continue;
+                }
+
+                const nextGuess = guess - npv / derivative;
+
+                if (Math.abs(nextGuess - guess) < tolerance) {
+                    return nextGuess; 
+                }
+
+                guess = nextGuess;
+                
+                // Safety break for extreme divergence
+                if (Math.abs(guess) > 100) return 0; 
+            }
+
+            return 0; 
+        }
+
+        /**
+         * Retrieves current input parameters from the controls.
+         */
+        function getParams() {
+            const P = parseFloat(document.getElementById('purchasePrice').value) || 0;
+            const DP_PCT = parseFloat(document.getElementById('downPayment').value) / 100 || 0;
+            const LOAN_TERM_YRS = parseInt(document.getElementById('loanTerm').value) || 30;
+            
+            const LOAN = P * (1 - DP_PCT);
+
+            const monthlyPmt = calculateMonthlyPayment(
+                LOAN, 
+                parseFloat(document.getElementById('interestRate').value) / 100 || 0.07, 
+                LOAN_TERM_YRS
+            );
+
+            return {
+                P: P,
+                UNITS: parseInt(document.getElementById('units').value) || 1,
+                DOWN_PAYMENT: P * DP_PCT,
+                LOAN_PRINCIPAL: LOAN,
+                
+                RATE: parseFloat(document.getElementById('interestRate').value) / 100 || 0.07,
+                PMI_MONTHLY: (DP_PCT < 0.20 && DP_PCT > 0) ? parseFloat(document.getElementById('pmi').value) : 0,
+                LOAN_TERM_YRS: LOAN_TERM_YRS,
+                MONTHLY_PMT: monthlyPmt, 
+                
+                APPRECIATION_RATE: parseFloat(document.getElementById('appreciation').value) / 100 || 0.05,
+                RENT_UNIT_0: parseFloat(document.getElementById('rentPerUnit').value) || 0,
+                RENT_GROWTH: parseFloat(document.getElementById('rentGrowth').value) / 100 || 0.03,
+                OCCUPANCY_RATE: parseFloat(document.getElementById('occupancy').value) / 100 || 0.97,
+
+                TAX_0: parseFloat(document.getElementById('propertyTax').value) || 0,
+                INSURANCE_0: parseFloat(document.getElementById('insurance').value) || 0,
+                UTILITIES_0: parseFloat(document.getElementById('utilities').value) || 0,
+                EXPENSE_GROWTH: parseFloat(document.getElementById('expenseGrowth').value) / 100 || 0.025,
+
+                MARGINAL_TAX_RATE: parseFloat(document.getElementById('marginalTaxRate').value) / 100 || 0.30,
+                ANNUAL_NON_CASH_DED: parseFloat(document.getElementById('nonCashDeduction').value) || 15000,
+                DED_LIFE_YRS: parseInt(document.getElementById('taxDeductionLife').value) || 27,
+                CAN_DEDUCT_ACTIVE: document.getElementById('canDeductActiveIncome').value === 'true', 
+                
+                HOLDING_PERIOD: parseInt(document.getElementById('holdingPeriod').value) || 10,
+                COST_OF_SALE_PCT: parseFloat(document.getElementById('costOfSale').value) / 100 || 0.06,
+            };
+        }
+
+        /**
+         * Main calculation engine. Simulates the investment year-by-year.
+         */
+        function calculateInvestmentOverTime(params) {
+            const SIMULATION_YEARS = Math.min(params.HOLDING_PERIOD, MAX_SIMULATION_YEARS);
+            
+            const results = [];
+            let cumulativeCashFlow = 0;
+            let cumulativeTaxAdvantage = 0; 
+            const loanPrincipal = params.LOAN_PRINCIPAL;
+            
+            const monthlyPmt = params.MONTHLY_PMT;
+            const annualDebtService = monthlyPmt * 12;
+            const annualPMI = params.PMI_MONTHLY * 12;
+            
+            // Year 0 Initialization (T=0)
+            results.push({
+                year: 0,
+                propertyValue: params.P,
+                mortgageBalance: loanPrincipal,
+                initialEquity: params.DOWN_PAYMENT,
+                paydown: 0,
+                appreciation: 0,
+                annualCashFlow: 0,
+                cumulativeCashFlow: 0,
+                taxAdvantage: 0, 
+                cumulativeTaxAdvantage: 0,
+                // totalAnnualCashFlow is the net cash flow (outflow) at the end of the year
+                totalAnnualCashFlow: -params.DOWN_PAYMENT 
+            });
+            
+            // Simulation Loop
+            for (let t = 1; t <= SIMULATION_YEARS; t++) {
+                
+                // 1. Property Value & Debt
+                const propertyValue = params.P * Math.pow(1 + params.APPRECIATION_RATE, t);
+                const appreciation = propertyValue - params.P;
+
+                const monthsPaid = t * 12;
+                const remainingBalance = calculateRemainingBalance(
+                    loanPrincipal, 
+                    params.RATE, 
+                    params.LOAN_TERM_YRS, 
+                    monthsPaid
+                );
+                const paydown = loanPrincipal - remainingBalance;
+
+                const balStartYear = calculateRemainingBalance(loanPrincipal, params.RATE, params.LOAN_TERM_YRS, (t - 1) * 12);
+                const totalAmortization = balStartYear - remainingBalance;
+                const annualInterestPaid = annualDebtService - totalAmortization;
+                
+                // 2. Income & Expenses
+                const rentUnitT = params.RENT_UNIT_0 * Math.pow(1 + params.RENT_GROWTH, t - 1);
+                const annualGrossIncome = rentUnitT * params.UNITS * 12;
+                const annualVacancy = annualGrossIncome * (1 - params.OCCUPANCY_RATE);
+                const annualEffectiveGrossIncome = annualGrossIncome - annualVacancy;
+
+                const taxT = params.TAX_0 * Math.pow(1 + params.EXPENSE_GROWTH, t - 1);
+                const insuranceT = params.INSURANCE_0 * Math.pow(1 + params.EXPENSE_GROWTH, t - 1);
+                const utilitiesT = params.UTILITIES_0 * Math.pow(1 + params.EXPENSE_GROWTH, t - 1);
+                
+                const totalOperatingExpensesBeforePMI = taxT + insuranceT + utilitiesT;
+                
+                let currentPMI = 0;
+                // Only charge PMI if down payment was less than 20% initially AND loan-to-value is still above 80% (or if it hasn't been paid down)
+                if (params.PMI_MONTHLY > 0 && remainingBalance / propertyValue > 0.8) {
+                    currentPMI = annualPMI;
+                }
+                
+                const totalOperatingExpenses = totalOperatingExpensesBeforePMI + currentPMI;
+
+                // 3. Cash Flow
+                const NOI = annualEffectiveGrossIncome - totalOperatingExpenses;
+                const annualCashFlow = NOI - annualDebtService;
+                
+                cumulativeCashFlow += annualCashFlow;
+
+                // 4. Tax Advantage Calculation
+                let annualTaxAdvantage = 0;
+                let annualDeduction = 0;
+                
+                if (t <= params.DED_LIFE_YRS) {
+                    annualDeduction = params.ANNUAL_NON_CASH_DED;
+                }
+                
+                // P&I, PMI, and Operating Expenses are deductions *before* calculating the tax effect of depreciation.
+                // The taxable income formula here focuses on cash flow vs. non-cash deductions (interest/depreciation)
+                const taxableIncome = NOI - annualInterestPaid - annualDeduction;
+                
+                if (taxableIncome < 0) {
+                    // Net loss, provides a tax shield
+                    if (params.CAN_DEDUCT_ACTIVE) {
+                        annualTaxAdvantage = Math.abs(taxableIncome) * params.MARGINAL_TAX_RATE;
+                    } else {
+                        // Loss is suspended, no immediate cash benefit
+                        annualTaxAdvantage = 0; 
+                    }
+                } else {
+                    // Net income, must pay taxes on it
+                    annualTaxAdvantage = -1 * taxableIncome * params.MARGINAL_TAX_RATE;
+                }
+                
+                cumulativeTaxAdvantage += annualTaxAdvantage;
+                
+                // 5. Total Annual Cash Flow (for IRR - sum of Cash Flow and Tax Shield)
+                const totalAnnualCashFlow = annualCashFlow + annualTaxAdvantage;
+
+                results.push({
+                    year: t,
+                    propertyValue: propertyValue,
+                    mortgageBalance: remainingBalance,
+                    initialEquity: params.DOWN_PAYMENT,
+                    paydown: paydown,
+                    appreciation: appreciation,
+                    annualCashFlow: annualCashFlow,
+                    cumulativeCashFlow: cumulativeCashFlow,
+                    taxAdvantage: annualTaxAdvantage, 
+                    cumulativeTaxAdvantage: cumulativeTaxAdvantage,
+                    totalAnnualCashFlow: totalAnnualCashFlow,
+                });
+            }
+
+            return results;
+        }
+
+        /**
+         * Prepares data for the chart, including stacking data and IRR calculation.
+         */
+        function prepareChartData(results, params) {
+            const SIMULATION_YEARS = results.length - 1; 
+            const labels = results.map(r => r.year);
+            
+            // Stacking Data
+            const initialEquityData = results.map(r => params.DOWN_PAYMENT); 
+            const paydownData = results.map(r => r.paydown); 
+            const appreciationData = results.map(r => r.appreciation); 
+            const cashflowData = results.map(r => r.cumulativeCashFlow); 
+            const taxAdvantageData = results.map(r => r.cumulativeTaxAdvantage); 
+            
+            // --- IRR CALCULATION ---
+            
+            // Array to accumulate annual cash flows (CF0, CF1, CF2, ...)
+            let irrCashFlows = [results[0].totalAnnualCashFlow]; // CF0 is initial investment (negative)
+            cumulativeIrr = [0]; // IRR at T=0 is 0
+
+            for (let t = 1; t <= SIMULATION_YEARS; t++) {
+                const result = results[t];
+
+                // 1. Get the actual cash flow for year t (CF_t, positive or negative)
+                const annualCF = result.totalAnnualCashFlow; 
+                
+                // 2. Add the current year's annual cash flow to the stream
+                // This array now holds CF0, CF1, ..., CFt
+                irrCashFlows.push(annualCF); 
+
+                // --- Temporary modification for IRR calculation at year t (ASSUMED Sale Event) ---
+                
+                // Calculate Net Sales Proceeds IF the property was sold at Year t
+                const finalPropertyValue = result.propertyValue;
+                const costOfSaleAmount = finalPropertyValue * params.COST_OF_SALE_PCT;
+                const netSalesProceeds = finalPropertyValue - costOfSaleAmount;
+                const netCashOutAfterDebt = netSalesProceeds - result.mortgageBalance;
+                
+                // The cash flow for the assumed exit year (t) must include the sale (CF_t + Net Proceeds)
+                const cashFlowAtExit = annualCF + netCashOutAfterDebt; 
+                
+                // Temporarily replace the last element (which is annualCF) with the cashFlowAtExit
+                const originalLastCF = irrCashFlows[t];
+                irrCashFlows[t] = cashFlowAtExit; 
+                
+                // 3. Calculate the IRR for the full stream CF0, CF1, ..., CF(t-1), [CF(t) + Sale]
+                const currentIRR = calculateIRR(irrCashFlows);
+                cumulativeIrr.push(currentIRR * 100); 
+
+                // 4. Restore the last element to the original annual cash flow (CFt) 
+                // ONLY if this is NOT the final year of the actual holding period.
+                if (t < params.HOLDING_PERIOD) {
+                    irrCashFlows[t] = originalLastCF;
+                }
+                // If t == params.HOLDING_PERIOD, irrCashFlows remains with the final exit value
+            }
+
+            // --- Datasets for Chart.js ---
+            return {
+                labels: labels,
+                datasets: [
+                    // Stacked Equity/Value Components (Y-axis: Left)
+                    {
+                        label: 'Initial Equity (Down Payment)',
+                        data: initialEquityData,
+                        backgroundColor: 'rgba(250, 202, 21, 0.7)', // equity-yellow
+                        fill: true,
+                        order: 5,
+                        stack: 'Stack 0',
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Mortgage Paydown (Amortization)',
+                        data: paydownData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)', // paydown-blue
+                        fill: true,
+                        order: 4,
+                        stack: 'Stack 0',
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Cumulative Appreciation',
+                        data: appreciationData,
+                        backgroundColor: 'rgba(139, 92, 246, 0.7)', // appreciation-purple
+                        fill: true,
+                        order: 3,
+                        stack: 'Stack 0',
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Cumulative Cash Flow (Net P/L)',
+                        data: cashflowData,
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)', // cashflow-green
+                        fill: true,
+                        order: 2,
+                        stack: 'Stack 0',
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Cumulative Tax Advantage',
+                        data: taxAdvantageData,
+                        backgroundColor: TAX_ADVANTAGE_COLOR, // tax-pink
+                        fill: true,
+                        order: 1, // Top layer of stacking
+                        stack: 'Stack 0',
+                        yAxisID: 'y'
+                    },
+                    // IRR Line (Y-axis: Right)
+                    {
+                        label: 'Annualized IRR (%)',
+                        data: cumulativeIrr,
+                        backgroundColor: IRR_COLOR, 
+                        borderColor: IRR_COLOR,
+                        yAxisID: 'y1', 
+                        type: 'line', 
+                        fill: false,
+                        pointRadius: 3,
+                        pointBackgroundColor: IRR_COLOR,
+                        order: 0, // Draw on top of stacked area
+                    }
+                ]
+            };
+        }
+
+        /**
+         * Initializes the Chart.js graph.
+         */
+        function initializeChart(chartData, params) {
+            const ctx = document.getElementById('investmentChart').getContext('2d');
+            
+            // Check if the plugin is loaded before registering
+            if (typeof ChartjsPluginAnnotation !== 'undefined') {
+                Chart.register(ChartjsPluginAnnotation);
+            }
+            
+            investmentChart = new Chart(ctx, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.dataset.yAxisID === 'y') {
+                                        label += currencyFormatter.format(context.parsed.y);
+                                    } else {
+                                        label += context.parsed.y.toFixed(2) + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Accumulated Value, Cumulative Profit, and Annualized IRR',
+                            font: { size: 16 }
+                        },
+                        annotation: {
+                            annotations: {
+                                holdingPeriodLine: {
+                                    type: 'line',
+                                    mode: 'vertical',
+                                    scaleID: 'x',
+                                    value: params.HOLDING_PERIOD,
+                                    borderColor: 'rgba(239, 68, 68, 0.8)', // payoff-red
+                                    borderWidth: 2,
+                                    borderDash: [6, 6],
+                                    label: {
+                                        content: `Exit Year (${params.HOLDING_PERIOD} Yrs)`,
+                                        display: true,
+                                        position: 'top',
+                                        backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                                        color: '#fff',
+                                        font: { size: 12, weight: 'bold' },
+                                        padding: 6
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            title: {
+                                display: true,
+                                text: 'Year of Holding Period',
+                                font: { weight: 'bold' }
+                            },
+                            ticks: {
+                                callback: (value, index) => chartData.labels[index]
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            stacked: true,
+                            title: {
+                                display: true,
+                                text: 'Accumulated Value ($)',
+                                font: { weight: 'bold' }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    // Only show ticks for positive values
+                                    if (value >= 0) {
+                                        return currencyFormatter.format(value);
+                                    }
+                                    return '';
+                                }
+                            },
+                            beginAtZero: true
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Annualized IRR (%)',
+                                font: { weight: 'bold' }
+                            },
+                            grid: {
+                                drawOnChartArea: false, // Only draw grid lines for the left Y-axis
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(1) + '%';
+                                }
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * Updates the Chart.js graph and summary display.
+         */
+        function updateChart() {
+            const params = getParams();
+            const SIMULATION_YEARS = params.HOLDING_PERIOD; 
+            
+            if (SIMULATION_YEARS < 1) return;
+            
+            simulationResults = calculateInvestmentOverTime(params);
+            const chartData = prepareChartData(simulationResults, params);
+            
+            // Calculate final summary metrics
+            const finalResult = simulationResults[SIMULATION_YEARS];
+            const finalIRR = cumulativeIrr[SIMULATION_YEARS] || 0;
+
+            // Sale Calculation at Exit Year
+            const finalPropertyValue = finalResult.propertyValue;
+            const costOfSaleAmount = finalPropertyValue * params.COST_OF_SALE_PCT;
+            const netSalesProceeds = finalPropertyValue - costOfSaleAmount;
+            const netCashOutAfterDebt = netSalesProceeds - finalResult.mortgageBalance;
+            
+            const totalInitialInvestment = params.DOWN_PAYMENT;
+            const totalProfit = netCashOutAfterDebt + finalResult.cumulativeCashFlow + finalResult.cumulativeTaxAdvantage - totalInitialInvestment;
+            const cashOnCash = (finalResult.annualCashFlow / totalInitialInvestment) * 100;
+            
+            // Update summary display
+            const summaryHTML = `
+                <div class="flex justify-between py-1 border-b">
+                    <span class="text-gray-600">Initial Equity Investment:</span>
+                    <span class="font-semibold text-gray-800">${currencyFormatter.format(totalInitialInvestment)}</span>
+                </div>
+                <div class="flex justify-between py-1 border-b">
+                    <span class="text-gray-600">Final Property Value:</span>
+                    <span class="font-semibold text-gray-800">${currencyFormatter.format(finalPropertyValue)}</span>
+                </div>
+                <div class="flex justify-between py-1 border-b">
+                    <span class="text-gray-600">Net Cash from Sale:</span>
+                    <span class="font-semibold text-gray-800">${currencyFormatter.format(netCashOutAfterDebt)}</span>
+                </div>
+                <div class="flex justify-between py-1 border-b">
+                    <span class="text-gray-600">Total Cumulative Cash Flow (P/L):</span>
+                    <span class="font-semibold text-cashflow-green">${currencyFormatter.format(finalResult.cumulativeCashFlow)}</span>
+                </div>
+                <div class="flex justify-between py-1 border-b">
+                    <span class="text-gray-600">Total Cumulative Tax Advantage:</span>
+                    <span class="font-semibold text-tax-pink">${currencyFormatter.format(finalResult.cumulativeTaxAdvantage)}</span>
+                </div>
+                <div class="flex justify-between py-1 border-b">
+                    <span class="text-gray-600">Annual Cash-on-Cash Return (Year ${SIMULATION_YEARS}):</span>
+                    <span class="font-semibold text-cashflow-green">${cashOnCash.toFixed(1)}%</span>
+                </div>
+                <div class="flex justify-between py-1 font-bold bg-gray-100 rounded-md px-2 mt-2 col-span-2">
+                    <span class="text-gray-800 text-lg">Annualized Internal Rate of Return (IRR):</span>
+                    <span class="text-irr-orange text-lg">${finalIRR.toFixed(2)}%</span>
+                </div>
+                <div class="flex justify-between py-1 font-bold bg-gray-100 rounded-md px-2 col-span-2">
+                    <span class="text-gray-800 text-lg">Total Profit on Investment:</span>
+                    <span class="text-primary-blue text-lg">${currencyFormatter.format(totalProfit)}</span>
+                </div>
+            `;
+            document.getElementById('summaryDisplay').innerHTML = summaryHTML;
+            document.getElementById('summaryTerm').textContent = SIMULATION_YEARS;
+
+            // Update Chart Data
+            if (investmentChart) {
+                // Update datasets (check if dataset counts match, although they should)
+                chartData.datasets.forEach((newDataset, i) => {
+                    if (investmentChart.data.datasets[i]) {
+                        investmentChart.data.datasets[i].data = newDataset.data;
+                    }
+                });
+                investmentChart.data.labels = chartData.labels;
+
+                // Update Annotation (Holding Period Line)
+                const annotation = investmentChart.options.plugins.annotation.annotations.holdingPeriodLine;
+                if (annotation) {
+                    annotation.value = SIMULATION_YEARS;
+                    annotation.label.content = `Exit Year (${SIMULATION_YEARS} Yrs)`;
+                }
+
+                investmentChart.update();
+            } else {
+                initializeChart(chartData, params);
+            }
+        }
+
+        // --- Event Listeners and Initialization ---
+
+        function setupListeners() {
+            const inputs = document.querySelectorAll('#controls input, #controls select');
+            inputs.forEach(input => {
+                input.addEventListener('input', updateChart);
+            });
+        }
+
+        window.onload = function () {
+            // Initial calculation and chart rendering
+            updateChart(); 
+            setupListeners();
+        }
+
+    </script>
+</body>
+</html>
