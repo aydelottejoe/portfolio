@@ -406,7 +406,7 @@
 
             // 3. Generate the Payoff curve (Net P&L) using the manual premium
             const netPayoffData = calculateNetPayoffCurve(payoff_premium);
-            
+
             // 4. Generate the BSM Price curve (Theoretical Value)
             const bsmPriceData = calculateBSMCurve();
 
@@ -421,11 +421,11 @@
             optionChart.options.plugins.title.text = `${positionType} ${contractType} Payoff at Expiration vs. Stock Price`;
             
             // Dataset 0: Net Payoff Curve (The primary visualization)
-            optionChart.data.datasets[0].label = `Payout     `;
+            optionChart.data.datasets[0].label = `Payoff     `;
             optionChart.data.datasets[0].data = netPayoffData;
             
             // Dataset 1: BSM Price Curve (The theoretical price value)
-            optionChart.data.datasets[1].label = `BSM Value`;
+            optionChart.data.datasets[1].label = `BSM Option Value`;
             optionChart.data.datasets[1].data = bsmPriceData;
             
             // Find max/min for dynamic Y-axis scaling (critical for P&L chart)
@@ -451,12 +451,12 @@
             
             // Update Premium Display
             document.getElementById('premiumDisplay').innerHTML = 
-                `Manual Payoff Premium: **$${payoff_premium.toFixed(2)}** | BSM Theoretical Price @ $S=K$: **$${bsm_premium_at_strike.toFixed(2)}**`;
+                `BSM Theoretical Price $${bsm_premium_at_strike.toFixed(2)}`;
 
             // Update Description
             document.getElementById('chartTitle').textContent = `${positionType} ${contractType} Payoff & Price Curves`;
             document.getElementById('modelDescription').innerHTML = 
-                `The **Net Payoff** curve (blue) uses the **Manual Premium** (slider value) for the profit/loss calculation. The **BSM Price** curve (green dashed) shows the theoretical option value based on current volatility/time.`;
+                `The Net Payoff curve (blue) uses the Manual Premium (slider value) for the profit/loss calculation. The BSM Price curve (green dashed) shows the theoretical option value based on current volatility/time.`;
         }
 
         /**
