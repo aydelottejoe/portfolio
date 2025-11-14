@@ -14,16 +14,12 @@
     </style>
 </head>
 <body class="antialiased text-gray-800">
-
+    
     <header class="bg-white shadow-md sticky top-0 z-10">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <a href="#home" class="text-2xl font-extrabold text-indigo-600 tracking-tight">JA</a>
             
             <nav class="flex items-center space-x-4">
-                <a href="#about" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150">About</a>
-                <a href="#skills" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150">Skills</a>
-                <a href="#contact" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150">Contact</a>
-                
                 <div class="relative" id="dropdown-menu">
                     <button id="dropdown-button" class="flex items-center space-x-1 text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150 p-2 rounded-lg hover:bg-indigo-50">
                         <span>More</span>
@@ -32,15 +28,17 @@
 
                     <div id="dropdown-content" class="absolute right-0 mt-2 w-40 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 z-20 hidden">
                         <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="dropdown-button">
-                            <a href="pages/samr.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">SAMR</a>
-                            <a href="pages/resume.html" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">Resume</a>
-                            <a href="pages/projects.html" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">Resume</a>
+                            <a href="/index.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">Home</a>
+                            <a href="/pages/projects.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">Projects</a>
+                            <a href="/pages/resume.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">Resume</a>
+                            <a href="/pages/samr.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">SAMR</a>
                         </div>
                     </div>
                 </div>
             </nav>
         </div>
     </header>
+
 
     <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 space-y-16 pb-20">
 
@@ -66,6 +64,46 @@
                             </h3>
                             <p class="text-gray-600 text-sm flex-grow">
                                 Visualize the Black-Scholes model for European call and put options using this handy interactive tool.    
+                            </p>
+                            <span class="mt-4 text-xs font-semibold text-indigo-500">
+                                View Details &rarr;
+                            </span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="../projects/multifamily_proforma.html" class="block group">
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition duration-300 transform hover:-translate-y-1 h-full flex flex-col">
+                        <img class="w-full h-48 object-cover object-center group-hover:opacity-90 transition duration-300"
+                            src="../assets/images/B"
+                            alt="Multifamily Proforma Project Graph">
+                        
+                        <div class="p-6 flex flex-col flex-grow">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600">
+                                Multifamily Real Estate Investment Simulator
+                            </h3>
+                            <p class="text-gray-600 text-sm flex-grow">
+                                Project the wealth creation of a privately held multifamily real estate investment.
+                            </p>
+                            <span class="mt-4 text-xs font-semibold text-indigo-500">
+                                View Details &rarr;
+                            </span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="../projects/fammily_home.html" class="block group">
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition duration-300 transform hover:-translate-y-1 h-full flex flex-col">
+                        <img class="w-full h-48 object-cover object-center group-hover:opacity-90 transition duration-300"
+                            src="../assets/images/sfd"
+                            alt="Family Home Wealth Creation">
+                        
+                        <div class="p-6 flex flex-col flex-grow">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600">
+                                Family Home Wealth Creation Simulator
+                            </h3>
+                            <p class="text-gray-600 text-sm flex-grow">
+                                Project the wealth creation of a single family home.
                             </p>
                             <span class="mt-4 text-xs font-semibold text-indigo-500">
                                 View Details &rarr;
