@@ -17,6 +17,16 @@
         
         /* Define the Inter font */
         body { font-family: 'Inter', sans-serif; }
+
+        /* Mobile Optimization: Force a reasonable height/aspect ratio for the chart */
+        #optionPriceChart {
+            height: 300px !important; /* Default height for mobile/small screens */
+        }
+        @media (min-width: 1024px) { /* On large screens and up */
+            #optionPriceChart {
+                height: auto !important; /* Let flex-grow handle height on desktop */
+            }
+        }
     </style>
     <script>
         tailwind.config = {
@@ -36,15 +46,15 @@
 <body class="bg-gray-50 min-h-screen">
 
     <div class="container mx-auto p-4 md:p-8">
-        <header class="text-center mb-8">
+        <header class="text-center mb-6 md:mb-8">
             <h1 class="text-3xl font-extrabold text-primary-blue sm:text-4xl">Option Payoff & Pricing Simulator</h1>
-            <p class="mt-2 text-lg text-gray-600">Analyze the net profit/loss (Payoff) and theoretical price (Premium) of a single option contract.</p>
+            <p class="mt-2 text-md text-gray-600">Analyze the net profit/loss (Payoff) and theoretical price (Premium) of a single option contract.</p>
         </header>
 
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             
-            <div id="controls" class="lg:col-span-1 p-6 bg-white shadow-xl rounded-xl h-fit border border-gray-100">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Inputs & Position Selection</h2>
+            <div id="controls" class="lg:col-span-1 p-4 sm:p-6 bg-white shadow-xl rounded-xl h-fit border border-gray-100">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Inputs & Position Selection</h2>
 
                 <div class="space-y-4 mb-6">
                     <div>
@@ -115,8 +125,8 @@
                 </button>
             </div>
 
-            <div class="lg:col-span-2 p-6 bg-white shadow-xl rounded-xl border border-gray-100 flex flex-col">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2" id="chartTitle"></h2>
+            <div class="lg:col-span-2 p-4 sm:p-6 bg-white shadow-xl rounded-xl border border-gray-100 flex flex-col">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 border-b pb-2" id="chartTitle"></h2>
                 <div class="flex-grow">
                     <canvas id="optionPriceChart"></canvas>
                 </div>
@@ -128,7 +138,7 @@
 
         </main>
         
-        <section id="calculationStepsContainer" class="hidden mt-8 p-6 bg-yellow-50 shadow-xl rounded-xl border border-yellow-200 transition-all duration-300">
+        <section id="calculationStepsContainer" class="hidden mt-6 lg:mt-8 p-4 sm:p-6 bg-yellow-50 shadow-xl rounded-xl border border-yellow-200 transition-all duration-300">
             </section>
 
     </div>
@@ -218,7 +228,6 @@
         const modelSelect = document.getElementById('modelSelect');
         const contractTypeSelect = document.getElementById('contractTypeSelect'); 
         const positionTypeSelect = document.getElementById('positionTypeSelect'); 
-        // CORRECTED: premiumSlider is now correctly linked to the new 'premium' ID
         const premiumSlider = document.getElementById('premium'); 
         const premiumValueDisplay = document.getElementById('premiumValue'); 
         const stepsContainer = document.getElementById('calculationStepsContainer');
@@ -230,7 +239,6 @@
          */
         function getParams() {
             return {
-                // FIXED: Now correctly reads from the Strike Price slider (id='strike')
                 K: parseFloat(document.getElementById('strike').value), 
                 T: parseFloat(document.getElementById('time').value),
                 r: parseFloat(document.getElementById('rate').value),
@@ -238,7 +246,6 @@
                 model: modelSelect.value,
                 contractType: contractTypeSelect.value, 
                 positionType: positionTypeSelect.value,
-                // FIXED: Now correctly reads the Premium slider value (id='premium')
                 manualPremium: parseFloat(premiumSlider.value) 
             };
         }
@@ -414,11 +421,11 @@
             optionChart.options.plugins.title.text = `${positionType} ${contractType} Payoff at Expiration vs. Stock Price`;
             
             // Dataset 0: Net Payoff Curve (The primary visualization)
-            optionChart.data.datasets[0].label = `Payout       `;
+            optionChart.data.datasets[0].label = `Net Payoff (P&L) @ Premium $${payoff_premium.toFixed(2)}`;
             optionChart.data.datasets[0].data = netPayoffData;
             
             // Dataset 1: BSM Price Curve (The theoretical price value)
-            optionChart.data.datasets[1].label = `BSM Value`;
+            optionChart.data.datasets[1].label = `BSM Price (Theoretical Value)`;
             optionChart.data.datasets[1].data = bsmPriceData;
             
             // Find max/min for dynamic Y-axis scaling (critical for P&L chart)
@@ -435,7 +442,6 @@
             optionChart.update();
 
             // Update display values
-            // FIXED: Ensure we are using the correct element IDs
             document.getElementById('strikeValue').textContent = `$${params.K.toFixed(2)}`;
             document.getElementById('volatilityValue').textContent = `${(params.sigma * 100).toFixed(1)}%`;
             document.getElementById('timeValue').textContent = `${params.T.toFixed(2)}`;
