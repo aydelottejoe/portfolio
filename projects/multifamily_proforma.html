@@ -121,7 +121,7 @@
                         <div class="input-group">
                             <label for="pmi" class="block text-sm font-medium text-gray-700">Monthly PMI ($) (Only if DP &lt; 20%):</label>
                             <input type="number" id="pmi" value="0" min="0" max="500" step="10" class="w-full mt-1">
-                            <p class="text-xs text-gray-500 mt-1">PMI is automatically ignored if Down Payment is $\ge 20\%$.</p>
+                            <p class="text-xs text-gray-500 mt-1">PMI is automatically ignored if Down Payment is ≥ 20%.</p>
                         </div>
                     </div>
 
@@ -192,7 +192,7 @@
 
                         <div class="input-group">
                             <label for="taxDeductionLife" class="block text-sm font-medium text-gray-700">Non-Cash Deduction Life (Years):</label>
-                            <input type="number" id="taxDeductionLife" value="27" min="0" max="40" step="1" class="w-full mt-1">
+                            <input type="number" id="taxDeductionLife" value="27.5" min="0" max="40" step="1" class="w-full mt-1">
                             <p class="text-xs text-gray-500 mt-1">Period over which the deduction applies (e.g., 27.5 for residential).</p>
                         </div>
 
@@ -306,7 +306,6 @@
          * Calculates the Internal Rate of Return (IRR) using Newton's method.
          */
         function calculateIRR(cashFlows) {
-            if (cashFlows.length < 2) return 0;
             if (cashFlows.every(cf => cf === 0)) return 0;
 
             // Helper function for Net Present Value (NPV)
@@ -528,6 +527,10 @@
             const SIMULATION_YEARS = results.length - 1; 
             const labels = results.map(r => r.year);
             
+            // RESET IRR ARRAY — THIS FIXES THE BUG
+            cumulativeIrr = [];
+            cumulativeIrr.push(null); // Year 0 IRR is 0%
+
             // Stacking Data
             const initialEquityData = results.map(r => params.DOWN_PAYMENT); 
             const paydownData = results.map(r => r.paydown); 
@@ -537,23 +540,17 @@
             
             // --- IRR CALCULATION ---
             
-            // Array to accumulate annual cash flows (CF0, CF1, CF2, ...)
-            let irrCashFlows = [results[0].totalAnnualCashFlow]; // CF0 is initial investment (negative)
-            cumulativeIrr = [0]; // IRR at T=0 is 0
+            // Array to accumulate annual cash flows (CF0, CF1, CF2, ...) up to the current year
+            let baseCashFlows = [results[0].totalAnnualCashFlow]; // CF0 is initial investment (negative)
 
             for (let t = 1; t <= SIMULATION_YEARS; t++) {
                 const result = results[t];
 
-                // 1. Get the actual cash flow for year t (CF_t, positive or negative)
-                const annualCF = result.totalAnnualCashFlow; 
-                
-                // 2. Add the current year's annual cash flow to the stream
-                // This array now holds CF0, CF1, ..., CFt
-                irrCashFlows.push(annualCF); 
+                // 1. Get the actual cash flow for year t (CF_t) and add it to the base stream
+                const annualCF = result.totalAnnualCashFlow;  
+                baseCashFlows.push(annualCF); // baseCashFlows now holds [CF0, CF1, ..., CFt]
 
-                // --- Temporary modification for IRR calculation at year t (ASSUMED Sale Event) ---
-                
-                // Calculate Net Sales Proceeds IF the property was sold at Year t
+                // --- Calculate the Sale/Exit Proceeds at Year t ---
                 const finalPropertyValue = result.propertyValue;
                 const costOfSaleAmount = finalPropertyValue * params.COST_OF_SALE_PCT;
                 const netSalesProceeds = finalPropertyValue - costOfSaleAmount;
@@ -562,20 +559,15 @@
                 // The cash flow for the assumed exit year (t) must include the sale (CF_t + Net Proceeds)
                 const cashFlowAtExit = annualCF + netCashOutAfterDebt; 
                 
-                // Temporarily replace the last element (which is annualCF) with the cashFlowAtExit
-                const originalLastCF = irrCashFlows[t];
-                irrCashFlows[t] = cashFlowAtExit; 
+                // 2. CREATE A TEMPORARY CASH FLOW STREAM FOR THE IRR CALCULATION
+                let exitCashFlows = [...baseCashFlows]; 
                 
-                // 3. Calculate the IRR for the full stream CF0, CF1, ..., CF(t-1), [CF(t) + Sale]
-                const currentIRR = calculateIRR(irrCashFlows);
+                // 3. Replace the last element with the exit cash flow
+                exitCashFlows[t] = cashFlowAtExit; 
+                
+                // 4. Calculate IRR for this exit scenario
+                const currentIRR = calculateIRR(exitCashFlows);
                 cumulativeIrr.push(currentIRR * 100); 
-
-                // 4. Restore the last element to the original annual cash flow (CFt) 
-                // ONLY if this is NOT the final year of the actual holding period.
-                if (t < params.HOLDING_PERIOD) {
-                    irrCashFlows[t] = originalLastCF;
-                }
-                // If t == params.HOLDING_PERIOD, irrCashFlows remains with the final exit value
             }
 
             // --- Datasets for Chart.js ---
@@ -743,7 +735,6 @@
                             },
                             ticks: {
                                 callback: function(value) {
-                                    // Only show ticks for positive values
                                     if (value >= 0) {
                                         return currencyFormatter.format(value);
                                     }
@@ -761,7 +752,7 @@
                                 font: { weight: 'bold' }
                             },
                             grid: {
-                                drawOnChartArea: false, // Only draw grid lines for the left Y-axis
+                                drawOnChartArea: false,
                                 color: 'rgba(0, 0, 0, 0.1)'
                             },
                             ticks: {
@@ -790,7 +781,7 @@
             
             // Calculate final summary metrics
             const finalResult = simulationResults[SIMULATION_YEARS];
-            const finalIRR = cumulativeIrr[SIMULATION_YEARS] || 0;
+            const finalIRR = cumulativeIrr[SIMULATION_YEARS - 1] || 0;
 
             // Sale Calculation at Exit Year
             const finalPropertyValue = finalResult.propertyValue;
@@ -842,7 +833,6 @@
 
             // Update Chart Data
             if (investmentChart) {
-                // Update datasets (check if dataset counts match, although they should)
                 chartData.datasets.forEach((newDataset, i) => {
                     if (investmentChart.data.datasets[i]) {
                         investmentChart.data.datasets[i].data = newDataset.data;
@@ -850,7 +840,6 @@
                 });
                 investmentChart.data.labels = chartData.labels;
 
-                // Update Annotation (Holding Period Line)
                 const annotation = investmentChart.options.plugins.annotation.annotations.holdingPeriodLine;
                 if (annotation) {
                     annotation.value = SIMULATION_YEARS;
@@ -873,7 +862,6 @@
         }
 
         window.onload = function () {
-            // Initial calculation and chart rendering
             updateChart(); 
             setupListeners();
         }
