@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joseph Aydelotte - Projects</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc; /* light gray background */
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <a href="#home" class="text-2xl font-extrabold text-indigo-600 tracking-tight">JA</a>
+            
+            <nav class="flex items-center space-x-4">
+                <a href="#about" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150">About</a>
+                <a href="#skills" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150">Skills</a>
+                <a href="#contact" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150">Contact</a>
+                
+                <div class="relative" id="dropdown-menu">
+                    <button id="dropdown-button" class="flex items-center space-x-1 text-sm font-medium text-gray-600 hover:text-indigo-600 transition duration-150 p-2 rounded-lg hover:bg-indigo-50">
+                        <span>More</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+
+                    <div id="dropdown-content" class="absolute right-0 mt-2 w-40 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 z-20 hidden">
+                        <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="dropdown-button">
+                            <a href="pages/samr.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">SAMR</a>
+                            <a href="pages/resume.html" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">Resume</a>
+                            <a href="pages/projects.html" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" role="menuitem">Resume</a>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 space-y-16 pb-20">
+
+        <section id="projects" class="py-10 bg-white rounded-xl shadow-lg border border-indigo-100 p-8 sm:p-12">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4 border-b-2 border-indigo-200 pb-3">
+                <span class="text-indigo-600">My</span> Projects
+            </h1>
+            <p class="text-xl text-gray-600 mb-10 max-w-3xl">
+                A showcase of technical and financial projects demonstrating my expertise in data, software development, and real estate analysis.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+
+                <a href="../projects/black_scholes.html" class="block group">
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition duration-300 transform hover:-translate-y-1 h-full flex flex-col">
+                        <img class="w-full h-48 object-cover object-center group-hover:opacity-90 transition duration-300"
+                            src="../assets/images/BSM_project_screenshot.png"
+                            alt="BSM Project Graph">
+                        
+                        <div class="p-6 flex flex-col flex-grow">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600">
+                                Black-Scholes Option Pricing Model
+                            </h3>
+                            <p class="text-gray-600 text-sm flex-grow">
+                                Visualize the Black-Scholes model for European call and put options using this handy interactive tool.    
+                            </p>
+                            <span class="mt-4 text-xs font-semibold text-indigo-500">
+                                View Details &rarr;
+                            </span>
+                        </div>
+                    </div>
+                </a>
+
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm">
+            &copy; <span id="year">2025</span> Joseph Aydelotte. All rights reserved. | Built with HTML & Tailwind CSS.
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        const dropdownButton = document.getElementById('dropdown-button');
+        const dropdownContent = document.getElementById('dropdown-content');
+
+        // Toggle the dropdown when the button is clicked
+        dropdownButton.addEventListener('click', () => {
+            dropdownContent.classList.toggle('hidden');
+        });
+
+        // Close the dropdown if the user clicks anywhere outside of it
+        document.addEventListener('click', (event) => {
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            // Check if the click event target is NOT inside the dropdown menu container
+            if (dropdownMenu && !dropdownMenu.contains(event.target)) {
+                // If it's not hidden, hide it.
+                if (!dropdownContent.classList.contains('hidden')) {
+                    dropdownContent.classList.add('hidden');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

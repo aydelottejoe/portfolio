@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option Derivative Payoff Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f0f0f0; }
+        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3730a3; }
+        
+        /* Define the Inter font */
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        'primary-blue': '#4f46e5',
+                        'secondary-gray': '#f3f4f6',
+                        'intrinsic-green': '#10b981', 
+                        'payoff-red': '#ef4444',
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold text-primary-blue sm:text-4xl">Option Payoff & Pricing Simulator</h1>
+            <p class="mt-2 text-lg text-gray-600">Analyze the net profit/loss (Payoff) and theoretical price (Premium) of a single option contract.</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div id="controls" class="lg:col-span-1 p-6 bg-white shadow-xl rounded-xl h-fit border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Inputs & Position Selection</h2>
+
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label for="modelSelect" class="block text-sm font-medium text-gray-700">Pricing Model</label>
+                        <select id="modelSelect" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-blue focus:border-primary-blue sm:text-sm rounded-md shadow-sm bg-secondary-gray">
+                            <option value="BSM">Black-Scholes-Merton (European)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label for="positionTypeSelect" class="block text-sm font-medium text-gray-700">Position Type</label>
+                        <select id="positionTypeSelect" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-blue focus:border-primary-blue sm:text-sm rounded-md shadow-sm bg-secondary-gray">
+                            <option value="Buy">Buy (Long)</option>
+                            <option value="Sell">Sell (Short)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="contractTypeSelect" class="block text-sm font-medium text-gray-700">Contract Type</label>
+                        <select id="contractTypeSelect" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-blue focus:border-primary-blue sm:text-sm rounded-md shadow-sm bg-secondary-gray">
+                            <option value="Call">Call Option</option>
+                            <option value="Put">Put Option</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="sliderControls" class="space-y-6">
+
+                    <div class="input-group">
+                        <label for="premium" class="block text-sm font-medium text-gray-700 flex justify-between">
+                            Option Price: <span id="premiumValue" class="font-semibold text-primary-blue">$3.00</span>
+                        </label>
+                        <input type="range" id="premium" min="0.10" max="10.00" value="3.00" step="0.10" class="w-full h-2 bg-secondary-gray rounded-lg appearance-none cursor-pointer range-lg accent-primary-blue">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="strike" class="block text-sm font-medium text-gray-700 flex justify-between">
+                            Strike Price (K): <span id="strikeValue" class="font-semibold text-primary-blue">$50.00</span>
+                        </label>
+                        <input type="range" id="strike" min="10" max="100" value="50" step="1" class="w-full h-2 bg-secondary-gray rounded-lg appearance-none cursor-pointer range-lg accent-primary-blue">
+                    </div>
+
+                    <div class="input-group bsm-only" id="volatilityControl">
+                        <label for="volatility" class="block text-sm font-medium text-gray-700 flex justify-between">
+                            Annual Volatility (σ): <span id="volatilityValue" class="font-semibold text-primary-blue">25.0%</span>
+                        </label>
+                        <input type="range" id="volatility" min="0.001" max="1.00" value="0.25" step="0.01" class="w-full h-2 bg-secondary-gray rounded-lg appearance-none cursor-pointer range-lg accent-primary-blue">
+                    </div>
+
+                    <div class="input-group bsm-only" id="timeControl">
+                        <label for="time" class="block text-sm font-medium text-gray-700 flex justify-between">
+                            Time to Expiration (T, Years): <span id="timeValue" class="font-semibold text-primary-blue">0.50</span>
+                        </label>
+                        <input type="range" id="time" min="0.001" max="2.00" value="0.5" step="0.01" class="w-full h-2 bg-secondary-gray rounded-lg appearance-none cursor-pointer range-lg accent-primary-blue">
+                    </div>
+
+                    <div class="input-group bsm-only" id="rateControl">
+                        <label for="rate" class="block text-sm font-medium text-gray-700 flex justify-between">
+                            Risk-Free Rate (r): <span id="rateValue" class="font-semibold text-primary-blue">5.0%</span>
+                        </label>
+                        <input type="range" id="rate" min="0.001" max="0.10" value="0.05" step="0.005" class="w-full h-2 bg-secondary-gray rounded-lg appearance-none cursor-pointer range-lg accent-primary-blue">
+                    </div>
+                </div>
+
+                <button id="showStepsBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 mt-6">
+                    Show BSM Price Calculation (S=K)
+                </button>
+            </div>
+
+            <div class="lg:col-span-2 p-6 bg-white shadow-xl rounded-xl border border-gray-100 flex flex-col">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2" id="chartTitle"></h2>
+                <div class="flex-grow">
+                    <canvas id="optionPriceChart"></canvas>
+                </div>
+                <div class="mt-4 text-sm text-gray-500 text-center">
+                    <p id="premiumDisplay" class="font-bold text-lg text-primary-blue"></p>
+                    <p id="modelDescription"></p>
+                </div>
+            </div>
+
+        </main>
+        
+        <section id="calculationStepsContainer" class="hidden mt-8 p-6 bg-yellow-50 shadow-xl rounded-xl border border-yellow-200 transition-all duration-300">
+            </section>
+
+    </div>
+
+    <script>
+        // --- Core Financial Functions ---
+
+        /**
+         * Standard Normal Cumulative Distribution Function (CDF)
+         */
+        function normalCDF(x) {
+            const b1 = 0.319381530;
+            const b2 = -0.356563782;
+            const b3 = 1.781477937;
+            const b4 = -1.821255978;
+            const b5 = 1.330274429;
+            const p = 0.2316419;
+            const c = 0.3989422804014337; 
+
+            if (x >= 0.0) {
+                const t = 1.0 / (1.0 + p * x);
+                const val = 1.0 - c * Math.exp(-x * x / 2.0) * (((t * b5 + b4) * t + b3) * t + b2) * t * t;
+                return val;
+            } else {
+                const t = 1.0 / (1.0 + p * (-x));
+                const val = 1.0 - c * Math.exp(-x * x / 2.0) * (((t * b5 + b4) * t + b3) * t + b2) * t * t;
+                return 1.0 - val;
+            }
+        }
+
+        /**
+         * Calculates the Black-Scholes-Merton theoretical PRICE (PREMIUM) for a European option.
+         */
+        function blackScholes(S, K, T, r, sigma, contractType) {
+            if (T <= 0.0001) return intrinsicValue(S, K, contractType);
+            if (sigma <= 0.0001) return intrinsicValue(S, K, contractType);
+
+            const d1 = (Math.log(S / K) + (r + sigma * sigma / 2) * T) / (sigma * Math.sqrt(T));
+            const d2 = d1 - sigma * Math.sqrt(T);
+
+            if (contractType === 'Call') {
+                return S * normalCDF(d1) - K * Math.exp(-r * T) * normalCDF(d2);
+            } else if (contractType === 'Put') {
+                return K * Math.exp(-r * T) * normalCDF(-d2) - S * normalCDF(-d1);
+            }
+            return 0;
+        }
+
+        /**
+         * Calculates the Intrinsic Value (Payoff at Expiration) of an option.
+         */
+        function intrinsicValue(S, K, contractType) {
+            if (contractType === 'Call') {
+                return Math.max(0, S - K);
+            } else if (contractType === 'Put') {
+                return Math.max(0, K - S);
+            }
+            return 0;
+        }
+
+        /**
+         * Calculates the NET PAYOFF (Profit/Loss) for a position.
+         * Net Payoff = (Final Payoff) + (Multiplier * Premium)
+         * Multiplier is -1 for Buy (Premium Paid) and +1 for Sell (Premium Received).
+         * @param {number} S - Underlying Stock Price
+         * @param {number} K - Strike Price
+         * @param {string} contractType - 'Call' or 'Put'
+         * @param {string} positionType - 'Buy' or 'Sell'
+         * @param {number} premium - The option's price that was *paid* or *received* (Manual Premium).
+         * @returns {number} Net Profit/Loss
+         */
+        function calculateNetPayoff(S, K, contractType, positionType, premium) {
+            const payoff = intrinsicValue(S, K, contractType);
+
+            if (positionType === 'Buy') {
+                return payoff - premium; // Payoff minus premium paid (Cost to enter)
+            } else if (positionType === 'Sell') {
+                return premium - payoff; // Premium received minus payoff obligation
+            }
+            return 0;
+        }
+
+        // --- Application State and Logic ---
+
+        let optionChart;
+        const chartElement = document.getElementById('optionPriceChart');
+        const modelSelect = document.getElementById('modelSelect');
+        const contractTypeSelect = document.getElementById('contractTypeSelect'); 
+        const positionTypeSelect = document.getElementById('positionTypeSelect'); 
+        // CORRECTED: premiumSlider is now correctly linked to the new 'premium' ID
+        const premiumSlider = document.getElementById('premium'); 
+        const premiumValueDisplay = document.getElementById('premiumValue'); 
+        const stepsContainer = document.getElementById('calculationStepsContainer');
+        const showStepsBtn = document.getElementById('showStepsBtn');
+        const X_STEPS = 100;
+
+        /**
+         * Retrieves current input parameters from the controls.
+         */
+        function getParams() {
+            return {
+                // FIXED: Now correctly reads from the Strike Price slider (id='strike')
+                K: parseFloat(document.getElementById('strike').value), 
+                T: parseFloat(document.getElementById('time').value),
+                r: parseFloat(document.getElementById('rate').value),
+                sigma: parseFloat(document.getElementById('volatility').value),
+                model: modelSelect.value,
+                contractType: contractTypeSelect.value, 
+                positionType: positionTypeSelect.value,
+                // FIXED: Now correctly reads the Premium slider value (id='premium')
+                manualPremium: parseFloat(premiumSlider.value) 
+            };
+        }
+
+        function clearSteps() {
+            stepsContainer.classList.add('hidden');
+            stepsContainer.innerHTML = '';
+        }
+        
+        /**
+         * Generates the step-by-step Black-Scholes calculation HTML (Used for BSM Price at S=K).
+         */
+        function getBSMStepsHTML(S, K, T, r, sigma, contractType) {
+            const numerator_d1 = Math.log(S / K) + (r + sigma * sigma / 2) * T;
+            const denominator = sigma * Math.sqrt(T);
+            const d1 = numerator_d1 / denominator;
+            const d2 = d1 - sigma * Math.sqrt(T);
+            const Nd1 = normalCDF(d1);
+            const Nd2 = normalCDF(d2);
+            const Nd_minus_d1 = normalCDF(-d1);
+            const Nd_minus_d2 = normalCDF(-d2);
+            const K_discounted = K * Math.exp(-r * T);
+            let price;
+            let finalFormula;
+
+            if (contractType === 'Call') {
+                price = S * Nd1 - K_discounted * Nd2;
+                finalFormula = `C = S \\cdot N(d_1) - K \\cdot e^{-rT} \\cdot N(d_2)`;
+            } else { // Put
+                price = K_discounted * Nd_minus_d2 - S * Nd_minus_d1;
+                finalFormula = `P = K \\cdot e^{-rT} \\cdot N(-d_2) - S \\cdot N(-d_1)`;
+            }
+            
+            const html = `
+                <h3 class="text-xl font-bold text-gray-700 mb-3">${contractType} Option Black-Scholes Calculation Steps (Stock Price $S = K = \\$${S.toFixed(2)}$)</h3>
+
+                <div class="space-y-4 text-sm bg-white p-4 rounded-lg">
+                    <div class="border-b pb-4">
+                        <p class="font-semibold text-primary-blue mb-2">Step 1: Calculate d1 and d2</p>
+                        $$\\begin{align*}
+                            d_1 &= \\frac{\\ln(S/K) + (r + \\sigma^2/2)T}{\\sigma \\sqrt{T}} = \\frac{\\ln(${S.toFixed(2)} / ${K.toFixed(2)}) + (${r.toFixed(4)} + ${sigma.toFixed(4)}^2/2) \\cdot ${T.toFixed(4)}}{${sigma.toFixed(4)} \\sqrt{${T.toFixed(4)}}} = ${d1.toFixed(4)} \\\\
+                            d_2 &= d_1 - \\sigma \\sqrt{T} = ${d1.toFixed(4)} - ${sigma.toFixed(4)} \\sqrt{${T.toFixed(4)}} = ${d2.toFixed(4)}
+                        \\end{align*}$$
+                    </div>
+                    
+                    <div class="border-b pb-4">
+                        <p class="font-semibold text-primary-blue mb-2">Step 2: Find Cumulative Distribution Function Values</p>
+                        <div class="grid grid-cols-2">
+                            <p>$N(d_1) = ${Nd1.toFixed(4)}$</p>
+                            <p>$N(-d_1) = ${Nd_minus_d1.toFixed(4)}$</p>
+                            <p>$N(d_2) = ${Nd2.toFixed(4)}$</p>
+                            <p>$N(-d_2) = ${Nd_minus_d2.toFixed(4)}$</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <p class="font-semibold text-primary-blue mb-2">Step 3: Calculate Final Option PRICE (PREMIUM)</p>
+                        $$\\begin{align*}
+                            ${finalFormula} \\\\
+                            \\text{Premium} &= \\$${price.toFixed(4)}
+                        \\end{align*}$$
+                    </div>
+                </div>
+            `;
+
+            return html;
+        }
+
+        function showSteps() {
+            const params = getParams();
+            
+            if (params.model !== 'BSM') {
+                 stepsContainer.innerHTML = `<p class="text-center text-red-600 font-semibold">Step-by-step calculations are only available for the Black-Scholes-Merton model.</p>`;
+                 stepsContainer.classList.remove('hidden');
+                 return;
+            }
+
+            // Use the current Strike Price (K) as the stock price (S) for the calculation steps.
+            const S_for_steps = params.K; 
+            
+            stepsContainer.innerHTML = getBSMStepsHTML(
+                S_for_steps, 
+                params.K, 
+                params.T, 
+                params.r, 
+                params.sigma, 
+                params.contractType
+            );
+            
+            stepsContainer.classList.remove('hidden');
+
+            if (window.MathJax) {
+                 window.MathJax.typesetPromise([stepsContainer]);
+            }
+        }
+
+        /**
+         * Calculates the BSM curve (Theoretical Price)
+         * @returns {object[]} Array of {x: S, y: bsm_price} data points.
+         */
+         function calculateBSMCurve() {
+            const params = getParams();
+            const X_MIN = params.K * 0.5;
+            const X_MAX = params.K * 1.5;
+            const dataPoints = [];
+            
+            for (let i = 0; i <= X_STEPS; i++) {
+                const S = X_MIN + (X_MAX - X_MIN) * i / X_STEPS;
+                const premium = blackScholes(S, params.K, params.T, params.r, params.sigma, params.contractType);
+                
+                dataPoints.push({ x: S, y: premium });
+            }
+            
+            return dataPoints;
+        }
+
+
+        /**
+         * Calculates the Net Payoff (Profit/Loss at Expiration) curve using the MANUAL PREMIUM.
+         * @param {number} premium - The fixed premium (manual input) to use for P&L calculation.
+         * @returns {object[]} Array of {x: S, y: net_payoff} data points.
+         */
+        function calculateNetPayoffCurve(premium) {
+            const params = getParams();
+            const X_MIN = params.K * 0.5;
+            const X_MAX = params.K * 1.5;
+            const dataPoints = [];
+
+            for (let i = 0; i <= X_STEPS; i++) {
+                const S = X_MIN + (X_MAX - X_MIN) * i / X_STEPS;
+                
+                // Use the new net payoff function, which incorporates the fixed manual premium
+                const netPayoff = calculateNetPayoff(S, params.K, params.contractType, params.positionType, premium);
+                
+                dataPoints.push({ x: S, y: netPayoff });
+            }
+            
+            return dataPoints;
+        }
+
+        /**
+         * Updates the Chart.js graph and display values.
+         */
+        function updateChart() {
+            clearSteps(); 
+
+            const params = getParams();
+            const strike = params.K;
+            const contractType = params.contractType;
+            const positionType = params.positionType;
+            const positionText = `${positionType} ${contractType}`;
+            
+            // 1. Get the BSM theoretical price (used for the BSM Price Curve and BSM Display)
+            const bsm_premium_at_strike = blackScholes(strike, strike, params.T, params.r, params.sigma, contractType);
+
+            // 2. Get the Premium used for the Payoff Curve (The user's manual slider input)
+            const payoff_premium = params.manualPremium;
+
+            // 3. Generate the Payoff curve (Net P&L) using the manual premium
+            const netPayoffData = calculateNetPayoffCurve(payoff_premium);
+            
+            // 4. Generate the BSM Price curve (Theoretical Value)
+            const bsmPriceData = calculateBSMCurve();
+
+            // Dynamic X-axis limits
+            const newXMin = strike * 0.5;
+            const newXMax = strike * 1.5;
+            
+            optionChart.options.scales.x.min = newXMin;
+            optionChart.options.scales.x.max = newXMax;
+
+            // Update title and data
+            optionChart.options.plugins.title.text = `${positionType} ${contractType} Payoff at Expiration vs. Stock Price`;
+            
+            // Dataset 0: Net Payoff Curve (The primary visualization)
+            optionChart.data.datasets[0].label = `Payout       `;
+            optionChart.data.datasets[0].data = netPayoffData;
+            
+            // Dataset 1: BSM Price Curve (The theoretical price value)
+            optionChart.data.datasets[1].label = `BSM Value`;
+            optionChart.data.datasets[1].data = bsmPriceData;
+            
+            // Find max/min for dynamic Y-axis scaling (critical for P&L chart)
+            const maxY = Math.max(...netPayoffData.map(p => p.y), ...bsmPriceData.map(p => p.y), payoff_premium, 0);
+            const minY = Math.min(...netPayoffData.map(p => p.y), ...bsmPriceData.map(p => p.y), -payoff_premium, 0);
+            optionChart.options.scales.y.min = minY * 1.1;
+            optionChart.options.scales.y.max = maxY * 1.1;
+
+            // Update Annotation
+            if (optionChart.options.plugins.annotation && optionChart.options.plugins.annotation.annotations.strikeLine) {
+                optionChart.options.plugins.annotation.annotations.strikeLine.value = strike; 
+            }
+            
+            optionChart.update();
+
+            // Update display values
+            // FIXED: Ensure we are using the correct element IDs
+            document.getElementById('strikeValue').textContent = `$${params.K.toFixed(2)}`;
+            document.getElementById('volatilityValue').textContent = `${(params.sigma * 100).toFixed(1)}%`;
+            document.getElementById('timeValue').textContent = `${params.T.toFixed(2)}`;
+            document.getElementById('rateValue').textContent = `${(params.r * 100).toFixed(1)}%`;
+            // Update the Premium slider value display
+            document.getElementById('premiumValue').textContent = `$${payoff_premium.toFixed(2)}`;
+            
+            // Update Premium Display
+            document.getElementById('premiumDisplay').innerHTML = 
+                `Manual Payoff Premium: **$${payoff_premium.toFixed(2)}** | BSM Theoretical Price @ $S=K$: **$${bsm_premium_at_strike.toFixed(2)}**`;
+
+            // Update Description
+            document.getElementById('chartTitle').textContent = `${positionType} ${contractType} Payoff & Price Curves`;
+            document.getElementById('modelDescription').innerHTML = 
+                `The **Net Payoff** curve (blue) uses the **Manual Premium** (slider value) for the profit/loss calculation. The **BSM Price** curve (green dashed) shows the theoretical option value based on current volatility/time.`;
+        }
+
+        /**
+         * Initializes the Chart.js graph instance.
+         */
+        function initializeChart() {
+            const ctx = chartElement.getContext('2d');
+            
+            const initialParams = getParams();
+            const initialXMin = initialParams.K * 0.5;
+            const initialXMax = initialParams.K * 1.5;
+            
+            // Ensure plugin is registered
+            Chart.register(window['chartjs-plugin-annotation']); 
+
+            optionChart = new Chart(ctx, {
+                type: 'scatter', 
+                data: {
+                    datasets: [
+                        { // Dataset 0: Net Payoff Curve (Primary P&L)
+                            label: 'Net Payoff (P&L) at Expiration',
+                            data: [], 
+                            borderColor: 'rgb(79, 70, 229)', // Primary blue
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            tension: 0, // Straight lines for P&L at Expiration
+                            fill: false,
+                            showLine: true, 
+                        },
+                        { // Dataset 1: BSM Price Curve (Theoretical Value)
+                            label: 'BSM Price (Theoretical Value)',
+                            data: [],
+                            borderColor: 'rgb(16, 185, 129)', // Intrinsic green (used for BSM Price now)
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.3, // Smoother line for BSM
+                            fill: false,
+                            showLine: true,
+                            borderDash: [5, 5], 
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Buy Call Payoff & Price Curves',
+                            font: { size: 18, weight: 'bold' }
+                        },
+                        legend: { display: true },
+                        tooltip: {
+                            callbacks: {
+                                title: (context) => `Stock Price: $${context[0].parsed.x.toFixed(2)}`,
+                                label: (context) => `${context.dataset.label}: $${parseFloat(context.parsed.y).toFixed(2)}`
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                strikeLine: {
+                                    type: 'line',
+                                    mode: 'vertical',
+                                    scaleID: 'x',
+                                    value: initialParams.K, 
+                                    borderColor: 'rgb(249, 115, 22)', 
+                                    borderWidth: 2,
+                                    borderDash: [6, 6],
+                                    label: {
+                                        content: 'Strike (K)',
+                                        enabled: true,
+                                        position: 'top',
+                                        color: 'rgb(249, 115, 22)',
+                                        font: { size: 12, weight: 'bold' }
+                                    }
+                                },
+                                // Add a horizontal line at 0 for P&L visualization
+                                zeroLine: {
+                                    type: 'line',
+                                    mode: 'horizontal',
+                                    scaleID: 'y',
+                                    value: 0,
+                                    borderColor: 'rgb(239, 68, 68)', // Tailwind red
+                                    borderWidth: 1,
+                                    borderDash: [3, 3],
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear', 
+                            min: initialXMin, 
+                            max: initialXMax, 
+                            title: {
+                                display: true,
+                                text: 'Underlying Stock Price (S)',
+                                font: { size: 14, weight: 'bold' }
+                            },
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return `$${value.toFixed(0)}`; 
+                                }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Net Profit / Loss ($)', 
+                                font: { size: 14, weight: 'bold' }
+                            },
+                        }
+                    }
+                }
+            });
+            updateChart();
+        }
+
+        // --- Event Handlers ---
+
+        function setupEventListeners() {
+            // Listen to ALL relevant controls
+            const allControls = document.querySelectorAll('#controls input, #controls select');
+            allControls.forEach(control => {
+                control.addEventListener('input', updateChart); 
+            });
+
+            showStepsBtn.addEventListener('click', showSteps);
+        }
+
+        window.onload = function() {
+            initializeChart();
+            setupEventListeners();
+        };
+
+    </script>
+</body>
+</html>
